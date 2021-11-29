@@ -1,0 +1,42 @@
+
+name: Node.js CI
+env:
+  
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: "Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)"
+        required: false
+        default: false
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v2
+      - name: Checkout technologiestiftung/stadtpuls-supabase#staging
+        uses: actions/checkout@v2
+        # check the supabase setup for staging
+        if: github.event.pull_request.base.ref == 'staging' || github.ref == 'ref/heads/staging'
+        with:
+          repository: technologiestiftung/stadtpuls-supabase
+          path: supabase
+          ref: staging
+      - name: Checkout technologiestiftung/stadtpuls-supabase#main
+        uses: actions/checkout@v2
+        # check the supabase setup for main
+        if: github.event.pull_request.base.ref == 'main' || github.ref == 'refs/heads/main'
+        with:
+          repository: technologiestiftung/stadtpuls-supabase
+          path: supabase
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
